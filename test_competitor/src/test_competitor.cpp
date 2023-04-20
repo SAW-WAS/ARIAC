@@ -72,6 +72,8 @@ TestCompetitor::TestCompetitor()
   floor_robot_tool_changer_ = this->create_client<ariac_msgs::srv::ChangeGripper>("/ariac/floor_robot_change_gripper");
   floor_robot_gripper_enable_ = this->create_client<ariac_msgs::srv::VacuumGripperControl>("/ariac/floor_robot_enable_gripper");
   ceiling_robot_gripper_enable_ = this->create_client<ariac_msgs::srv::VacuumGripperControl>("/ariac/ceiling_robot_enable_gripper");
+  get_tray_pose_srv_ = this->create_client<saw_was_msgs::srv::GetTrayPose>("/parts_manager_node/get_tray_pose");
+  get_part_pose_srv_ = this->create_client<saw_was_msgs::srv::GetPartPose>("/parts_manager_node/get_part_pose");
 
   AddModelsToPlanningScene();
 
@@ -541,39 +543,21 @@ bool TestCompetitor::FloorRobotChangeGripper(std::string station, std::string gr
 
 bool TestCompetitor::FloorRobotPickandPlaceTray(int tray_id, int agv_num)
 {
-  // Check if kit tray is on one of the two tables
-  geometry_msgs::msg::Pose tray_pose;
-  std::string station;
-  bool found_tray = false;
-
-  // Check table 1
-  for (auto tray: kts1_trays_) {
-    if (tray.id == tray_id) {
-      station = "kts1";
-      tray_pose = MultiplyPose(kts1_camera_pose_, tray.pose);
-      found_tray = true;
-      break;
-    }
-  }
-  // Check table 2
-  if (!found_tray) {
-    for (auto tray: kts2_trays_) {
-      if (tray.id == tray_id) {
-        station = "kts2";
-        tray_pose = MultiplyPose(kts2_camera_pose_, tray.pose);
-        found_tray = true;
-        break;
-      }
-    }
-  }
-  if (!found_tray)
+  auto request = std::make_shared<saw_was_msgs::srv::GetTrayPose::Request>();
+  request->id = tray_id;
+  auto result = get_tray_pose_srv_->async_send_request(request);
+  result.wait();
+  if (result.get()->poses.empty()) {
     return false;
+  }
+  const geometry_msgs::msg::Pose tray_pose = result.get()->poses.front().pose;
 
   double tray_rotation = GetYaw(tray_pose);
 
   // Move floor robot to the corresponding kit tray table
+  const auto station = "kits1";
   if (station == "kts1") {
-    floor_robot_.setJointValueTarget(floor_kts1_js_);
+  floor_robot_.setJointValueTarget(floor_kts1_js_);
   } else {
     floor_robot_.setJointValueTarget(floor_kts2_js_);
   }
