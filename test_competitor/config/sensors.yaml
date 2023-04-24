@@ -11,6 +11,13 @@ sensors:
       xyz: [-2.286, -2.96, 1.8]
       rpy: [pi, pi/2, 0]
 
+  conveyor_camera:
+    type: advanced_logical_camera
+    pose:
+      xyz: [-0.60, 3.06, 1.8]
+      rpy: [pi, pi/2, 0]
+    visualize_fov: true
+
   kts1_camera:
     type: advanced_logical_camera
     pose:

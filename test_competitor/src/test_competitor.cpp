@@ -555,7 +555,10 @@ bool TestCompetitor::FloorRobotPickandPlaceTray(int tray_id, int agv_num)
   double tray_rotation = GetYaw(tray_pose);
 
   // Move floor robot to the corresponding kit tray table
-  const auto station = "kits1";
+  std::string station = "kts1";
+  if (tray_pose.position.y > 0) {
+    station = "kts2";
+  }
   if (station == "kts1") {
   floor_robot_.setJointValueTarget(floor_kts1_js_);
   } else {
@@ -629,36 +632,33 @@ bool TestCompetitor::FloorRobotPickBinPart(ariac_msgs::msg::Part part_to_pick)
   RCLCPP_INFO_STREAM(get_logger(), "Attempting to pick a " <<
     part_colors_[part_to_pick.color] << " " << part_types_[part_to_pick.type]);
 
-  // Check if part is in one of the bins
-  geometry_msgs::msg::Pose part_pose;
-  bool found_part = false;
-  std::string bin_side;
-
-  // Check left bins
-  for (auto part: left_bins_parts_) {
-    if (part.part.type == part_to_pick.type && part.part.color == part_to_pick.color) {
-      part_pose = MultiplyPose(left_bins_camera_pose_, part.pose);
-      found_part = true;
-      bin_side = "left_bins";
-      break;
-    }
-  }
-  // Check right bins
-  if (!found_part) {
-    for (auto part: right_bins_parts_) {
-      if (part.part.type == part_to_pick.type && part.part.color == part_to_pick.color) {
-        part_pose = MultiplyPose(right_bins_camera_pose_, part.pose);
-        found_part = true;
-        bin_side = "right_bins";
-        break;
-      }
-    } 
-  }
-  if (!found_part) {
+  auto request = std::make_shared<saw_was_msgs::srv::GetPartPose::Request>();
+  request->part = part_to_pick;
+  auto result = get_part_pose_srv_->async_send_request(request);
+  result.wait();
+  if (result.get()->poses.empty()) {
     RCLCPP_ERROR(get_logger(), "Unable to locate part");
     return false;
   }
 
+  // Check if part is in one of the bins
+  geometry_msgs::msg::Pose part_pose;
+  auto part_poses_it = result.get()->poses.cbegin();
+  for (const auto is_conveyor : result.get()->is_conveyor) {
+    if (!is_conveyor) {
+      part_pose = part_poses_it->pose;
+      break;
+    }
+    part_poses_it++;
+  }
+  if (part_poses_it == result.get()->poses.cend()) {
+    RCLCPP_ERROR(get_logger(), "Unable to locate part that is not on a conveyor");
+  }
+  std::string bin_side = "right_bins";
+  if (part_pose.position.y > 0) {
+    bin_side = "left_bins";
+  }
+  
   double part_rotation = GetYaw(part_pose);
 
   // Change gripper at location closest to part
