@@ -15,10 +15,12 @@ parts:
       - type: 'pump'
         color: 'purple'
         slots: [1, 3, 7, 9]
+        flipped: false
     bin6:
       - type: 'battery'
         color: 'blue'
         slots: [1, 3, 7, 9]
+        flipped: true
   conveyor_belt: # population params for conveyor belt
     active: true
     spawn_rate: 3.0 # seconds between spawn
