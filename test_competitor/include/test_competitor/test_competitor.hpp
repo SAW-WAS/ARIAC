@@ -44,8 +44,8 @@
 
 #include <geometry_msgs/msg/pose.hpp>
 
-#include <saw_was_msgs/srv/get_part_pose.hpp>
-#include <saw_was_msgs/srv/get_tray_pose.hpp>
+#include <saw_msgs/srv/get_part_pose.hpp>
+#include <saw_msgs/srv/get_tray_pose.hpp>
 
 class TestCompetitor : public rclcpp::Node
 {
@@ -216,8 +216,8 @@ private:
   rclcpp::Client<ariac_msgs::srv::VacuumGripperControl>::SharedPtr ceiling_robot_gripper_enable_;
 
   // SAW-WAS Services
-  rclcpp::Client<saw_was_msgs::srv::GetTrayPose>::SharedPtr get_tray_pose_srv_;
-  rclcpp::Client<saw_was_msgs::srv::GetPartPose>::SharedPtr get_part_pose_srv_;
+  rclcpp::Client<saw_msgs::srv::GetTrayPose>::SharedPtr get_tray_pose_srv_;
+  rclcpp::Client<saw_msgs::srv::GetPartPose>::SharedPtr get_part_pose_srv_;
 
   // Constants
   double kit_tray_thickness_ = 0.01;

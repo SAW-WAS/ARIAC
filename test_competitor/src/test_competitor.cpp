@@ -88,8 +88,8 @@ TestCompetitor::TestCompetitor()
   floor_robot_tool_changer_ = this->create_client<ariac_msgs::srv::ChangeGripper>("/ariac/floor_robot_change_gripper");
   floor_robot_gripper_enable_ = this->create_client<ariac_msgs::srv::VacuumGripperControl>("/ariac/floor_robot_enable_gripper");
   ceiling_robot_gripper_enable_ = this->create_client<ariac_msgs::srv::VacuumGripperControl>("/ariac/ceiling_robot_enable_gripper");
-  get_tray_pose_srv_ = this->create_client<saw_was_msgs::srv::GetTrayPose>("/parts_manager_node/get_tray_pose");
-  get_part_pose_srv_ = this->create_client<saw_was_msgs::srv::GetPartPose>("/parts_manager_node/get_part_pose");
+  get_tray_pose_srv_ = this->create_client<saw_msgs::srv::GetTrayPose>("/parts_manager_node/get_tray_pose");
+  get_part_pose_srv_ = this->create_client<saw_msgs::srv::GetPartPose>("/parts_manager_node/get_part_pose");
 
   AddModelsToPlanningScene();
 
@@ -604,7 +604,7 @@ bool TestCompetitor::FloorRobotChangeGripper(std::string station, std::string gr
 
 bool TestCompetitor::FloorRobotPickandPlaceTray(int tray_id, int agv_num)
 {
-  auto request = std::make_shared<saw_was_msgs::srv::GetTrayPose::Request>();
+  auto request = std::make_shared<saw_msgs::srv::GetTrayPose::Request>();
   request->id = tray_id;
   auto result = get_tray_pose_srv_->async_send_request(request);
   result.wait();
@@ -693,7 +693,7 @@ bool TestCompetitor::FloorRobotPickBinPart(ariac_msgs::msg::Part part_to_pick)
 {
   RCLCPP_INFO_STREAM(get_logger(), "Attempting to pick a " << part_colors_[part_to_pick.color] << " " << part_types_[part_to_pick.type]);
 
-  auto request = std::make_shared<saw_was_msgs::srv::GetPartPose::Request>();
+  auto request = std::make_shared<saw_msgs::srv::GetPartPose::Request>();
   request->part = part_to_pick;
   auto result = get_part_pose_srv_->async_send_request(request);
   result.wait();
